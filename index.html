@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>STRYDE — Premium Footwear Catalog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* Your exact theme variables! */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --black: #0a0a0a; --white: #f5f0e8; --cream: #ede8dc; --accent: #c8412a; --gray: #9a9490; --card-bg: #1a1a1a; }
+    body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    
+    /* Your exact Header */
+    header { display: flex; justify-content: space-between; align-items: center; padding: 24px 60px; border-bottom: 1px solid #222; position: sticky; top: 0; background: var(--black); z-index: 100; }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 4px; color: var(--white); text-decoration: none; }
+    nav a { color: var(--gray); text-decoration: none; margin-left: 32px; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+    nav a:hover { color: var(--white); }
+
+    /* The New Storefront Layout */
+    .store-header { text-align: center; padding: 80px 20px 20px; }
+    .store-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; letter-spacing: 4px; }
+    .store-header p { color: var(--gray); font-size: 1rem; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;}
+
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; padding: 60px; max-width: 1200px; margin: 0 auto; }
+    
+    .product-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; transition: transform 0.3s; border: 1px solid #222; text-align: center; padding-bottom: 30px;}
+    .product-card:hover { transform: translateY(-10px); border-color: var(--accent); }
+    
+    .product-link { text-decoration: none; color: inherit; display: block; }
+    
+    .card-img-wrap { background: var(--cream); padding: 40px 20px; display: flex; justify-content: center; align-items: center; height: 350px; position: relative; overflow: hidden;}
+    .card-img-wrap img { width: 100%; max-width: 280px; transform: rotate(-10deg); filter: drop-shadow(0 20px 30px rgba(0,0,0,0.25)); transition: transform 0.4s; z-index: 2;}
+    .product-card:hover .card-img-wrap img { transform: rotate(-5deg) scale(1.05); }
+    
+    .card-info { padding: 30px 20px 0; }
+    .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 1px; margin-bottom: 8px; color: var(--white); }
+    .card-price { color: var(--gray); font-weight: 500; font-size: 1.2rem; margin-bottom: 24px; }
+    
+    .btn-view { display: inline-block; background: transparent; color: var(--white); border: 1px solid var(--white); padding: 12px 30px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s; cursor: pointer;}
+    .product-card:hover .btn-view { background: var(--white); color: var(--black); }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Stryde</a>
+  <nav>
+    <a href="index.html" style="color: var(--white);">Shop</a>
+    <a href="#">About</a>
+  </nav>
+</header>
+
+<div class="store-header">
+  <h1>The 2025 Collection</h1>
+  <p>Engineered for the streets</p>
+</div>
+
+<div class="product-grid">
+  
+  <a href="shoe1.html" class="product-link">
+    <div class="product-card">
+      <div class="card-img-wrap">
+        <img src="https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/308614/05/sv01/fnd/IND/fmt/png/BMW-M-Motorsport-Drift-Cat-11-Sneakers" alt="Runner X1">
+      </div>
+      <div class="card-info">
+        <h2 class="card-title">Runner X1</h2>
+        <div class="card-price">$189.00</div>
+        <div class="btn-view">View Details</div>
+      </div>
+    </div>
+  </a>
+
+  <a href="shoe2.html" class="product-link">
+    <div class="product-card">
+      <div class="card-img-wrap">
+        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800" alt="Runner X2">
+      </div>
+      <div class="card-info">
+        <h2 class="card-title">Runner X2</h2>
+        <div class="card-price">$199.00</div>
+        <div class="btn-view">View Details</div>
+      </div>
+    </div>
+  </a>
+
+</div>
+
+</body>
+</html>
