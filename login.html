@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stryde | Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <h2>STRYDE</h2>
+    <div>
+      <a href="index.html">Shop</a>
+      <a href="login.html" style="color:var(--accent);">Login</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div style="max-width: 400px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 8px;">
+      <h2 style="text-align: center;">Welcome to Stryde</h2>
+      <p style="text-align: center; color: #666; margin-bottom: 2rem;">Log in or create an account.</p>
+
+      <form id="auth-form">
+        <div>
+          <label>Email</label>
+          <input type="email" id="email" required placeholder="you@email.com">
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="password" required placeholder="Min 6 characters">
+        </div>
+        
+        <button type="button" id="login-btn" style="margin-bottom: 1rem;">Log In</button>
+        <button type="button" id="signup-btn" style="background: #333;">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    const supabaseUrl = 'https://uwltytozmakzpdsyakzg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3bHR5dG96bWFrenBkc3lha3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTg3ODksImV4cCI6MjA5NTI3NDc4OX0.3Ow9gIb_87KY6gBrVAN9jJUTp4biJMIemDKoG17NetE';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    // --- SIGN UP LOGIC ---
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+      const { data, error } = await supabaseClient.auth.signUp({
+        email: emailInput.value,
+        password: passwordInput.value,
+      });
+
+      if (error) {
+        alert("Signup Error: " + error.message);
+      } else {
+        alert("Account created successfully! You are now logged in.");
+        window.location.href = "profile.html"; // Send them to the profile page
+      }
+    });
+
+    // --- LOG IN LOGIC ---
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passwordInput.value,
+      });
+
+      if (error) {
+        alert("Login Error: " + error.message);
+      } else {
+        alert("Welcome back!");
+        window.location.href = "profile.html"; // Send them to the profile page
+      }
+    });
+  </script>
+</body>
+</html>
