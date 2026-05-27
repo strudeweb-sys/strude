@@ -11,25 +11,113 @@
     <div>
       <a href="index.html">Shop</a>
       <a href="profile.html" style="color:var(--accent);">Profile</a>
-      <a href="admin.html">Admin</a>
+      <a href="#" id="logout-btn" style="margin-left: 1.5rem; color: #999;">Logout</a>
     </div>
   </nav>
 
-  <div class="container" style="max-width: 800px;">
+  <div class="container" style="max-width: 600px;">
+    
     <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
-      <div style="width: 100px; height: 100px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1rem;">
-        JD
-      </div>
-      <h2>John Doe</h2>
-      <p style="color: #666;">johndoe@email.com</p>
+      <img id="display-dp" src="https://via.placeholder.com/150" alt="DP" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; border: 3px solid var(--primary);">
+      <h2 id="display-name">Loading...</h2>
+      <p id="display-email" style="color: #666;">...</p>
     </div>
 
-    <h3>Order History</h3>
-    <div class="order-card">
-      <h4>Order #10042</h4>
-      <p>1x Stryde Phantom Runner ($120.00)</p>
-      <span style="color: green; font-weight: bold;">Delivered</span>
-    </div>
+    <form id="profile-form" style="margin: 0;">
+      <h3>Edit Profile</h3>
+      <div>
+        <label>Full Name</label>
+        <input type="text" id="full-name" placeholder="E.g. John Doe">
+      </div>
+      <div>
+        <label>Display Picture URL (DP)</label>
+        <input type="url" id="avatar-url" placeholder="https://link-to-your-photo.jpg">
+      </div>
+      <button type="submit">Save Profile</button>
+    </form>
+
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    const supabaseUrl = 'https://uwltytozmakzpdsyakzg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3bHR5dG96bWFrenBkc3lha3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTg3ODksImV4cCI6MjA5NTI3NDc4OX0.3Ow9gIb_87KY6gBrVAN9jJUTp4biJMIemDKoG17NetE';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let currentUser = null;
+
+    async function loadProfile() {
+      // 1. Check if the user is actually logged in
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      
+      if (!session) {
+        // Kick them to login page if they aren't logged in
+        window.location.href = "login.html";
+        return;
+      }
+
+      currentUser = session.user;
+      document.getElementById('display-email').innerText = currentUser.email;
+
+      // 2. Fetch their profile data from our new table
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .single(); // Get just this one user's row
+
+      // 3. If they have a profile, show their info on the screen
+      if (profile) {
+        if (profile.full_name) {
+          document.getElementById('display-name').innerText = profile.full_name;
+          document.getElementById('full-name').value = profile.full_name;
+        } else {
+          document.getElementById('display-name').innerText = "New User";
+        }
+        
+        if (profile.avatar_url) {
+          document.getElementById('display-dp').src = profile.avatar_url;
+          document.getElementById('avatar-url').value = profile.avatar_url;
+        }
+      } else {
+        document.getElementById('display-name').innerText = "New User";
+      }
+    }
+
+    // --- Save Profile Logic ---
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const newName = document.getElementById('full-name').value;
+      const newDp = document.getElementById('avatar-url').value;
+
+      // "upsert" means Update if it exists, or Insert if it is brand new!
+      const { error } = await supabaseClient
+        .from('profiles')
+        .upsert({ 
+          user_id: currentUser.id, 
+          full_name: newName, 
+          avatar_url: newDp 
+        });
+
+      if (error) {
+        alert("Error saving profile: " + error.message);
+      } else {
+        alert("Profile updated!");
+        loadProfile(); // Reload the page with the new info
+      }
+    });
+
+    // --- Logout Logic ---
+    document.getElementById('logout-btn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      window.location.href = "login.html";
+    });
+
+    // Run the load function immediately
+    loadProfile();
+  </script>
 </body>
 </html>
