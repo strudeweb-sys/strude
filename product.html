@@ -1,8 +1,9 @@
+<!-- product.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Stryde | Product</title>
+  <title>Stryde | Product Details</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,60 +12,184 @@
     <div>
       <a href="index.html">Shop</a>
       <a href="profile.html">Profile</a>
-      <a href="admin.html">Admin</a>
     </div>
   </nav>
 
+  <!-- Shoe Details Container -->
   <div class="container" id="product-container">
-    </div>
+    <h2>Loading product details...</h2>
+  </div>
 
+  <!-- Review Form Container (Only usable if logged in) -->
+  <div class="container" style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+    <h3>Leave a Review</h3>
+    <div id="auth-warning" style="display: none; color: #666;">
+      <p>You must be <a href="login.html" style="color:var(--accent); font-weight:bold;">logged in</a> to leave a review.</p>
+    </div>
+    
+    <form id="review-form" style="display: none; margin: 0; max-width: 100%;">
+      <div style="margin-bottom: 1rem;">
+        <label>Rating</label>
+        <select id="review-rating" style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px;" required>
+          <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+          <option value="4">⭐⭐⭐⭐ (4/5)</option>
+          <option value="3">⭐⭐⭐ (3/5)</option>
+          <option value="2">⭐⭐ (2/5)</option>
+          <option value="1">⭐ (1/5)</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label>Your Review</label>
+        <textarea id="review-text" rows="4" placeholder="What do you think of these kicks?" required></textarea>
+      </div>
+      <button type="submit">Submit Review</button>
+    </form>
+  </div>
+
+  <!-- Display Past Reviews Container -->
   <div class="container">
     <h3>Customer Reviews</h3>
     <div id="reviews-container">
-      </div>
+      <p>Loading reviews...</p>
+    </div>
   </div>
 
-  <script src="data.js"></script>
+  <!-- Load Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <script>
-    // Get shoe ID from the URL
+    const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL_HERE';
+    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // 1. Get the shoe ID from the browser URL address bar
     const urlParams = new URLSearchParams(window.location.search);
     const shoeId = parseInt(urlParams.get('id'));
 
-    // Find the shoe in our mock database
-    const shoe = mockShoes.find(s => s.id === shoeId);
-    
-    if (shoe) {
+    let activeProfileName = "Anonymous User";
+
+    // Main controller function
+    async function initProductPage() {
+      if (!shoeId) {
+        document.getElementById('product-container').innerHTML = "<h1>No product selected.</h1>";
+        return;
+      }
+
+      await fetchShoeDetails();
+      await checkUserLoginStatus();
+      await fetchShoeReviews();
+    }
+
+    // 2. Fetch Single Shoe Data
+    async function fetchShoeDetails() {
+      const { data: shoe, error } = await supabaseClient
+        .from('shoes')
+        .select('*')
+        .eq('id', shoeId)
+        .single();
+
+      if (error || !shoe) {
+        document.getElementById('product-container').innerHTML = "<h1>Shoe not found.</h1>";
+        return;
+      }
+
+      // Render the shoe layout. Note: using shoe.image to match your database fix!
       document.getElementById('product-container').innerHTML = `
-        <div style="display: flex; gap: 3rem; background: white; padding: 2rem; border-radius: 8px;">
-          <img src="${shoe.img}" style="max-width: 50%; border-radius: 8px;">
-          <div>
+        <div style="display: flex; gap: 3rem; background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; flex-wrap: wrap;">
+          <img src="${shoe.image || shoe.img}" style="max-width: 450px; width: 100%; border-radius: 8px; object-fit: cover;">
+          <div style="flex: 1; min-width: 300px;">
             <h1>${shoe.name}</h1>
-            <h2 class="price">$${shoe.price.toFixed(2)}</h2>
-            <p>${shoe.description}</p>
-            <button style="margin-top: 2rem;">Add to Cart</button>
+            <h2 class="price" style="font-size: 2rem; margin: 1rem 0;">$${shoe.price.toFixed(2)}</h2>
+            <p style="line-height: 1.6; color: #555;">${shoe.description}</p>
+            <button style="margin-top: 2rem; max-width: 250px;">Add to Cart</button>
           </div>
         </div>
       `;
-
-      // Filter and display reviews for THIS specific shoe
-      const shoeReviews = mockReviews.filter(r => r.shoeId === shoeId);
-      const reviewsDiv = document.getElementById('reviews-container');
-      
-      if (shoeReviews.length > 0) {
-        shoeReviews.forEach(rev => {
-          reviewsDiv.innerHTML += `
-            <div class="review-card">
-              <strong>${rev.user}</strong> (Rating: ${rev.rating}/5)
-              <p>${rev.text}</p>
-            </div>
-          `;
-        });
-      } else {
-        reviewsDiv.innerHTML = "<p>No reviews yet. Be the first!</p>";
-      }
-    } else {
-      document.getElementById('product-container').innerHTML = "<h1>Shoe not found.</h1><a href='index.html'>Go back</a>";
     }
+
+    // 3. Check User Session & Get Profile Name
+    async function checkUserLoginStatus() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      if (session) {
+        // User is logged in! Show the review form
+        document.getElementById('review-form').style.display = 'block';
+        
+        // Fetch their name from 'profiles' table to stamp onto the review
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (profile && profile.full_name) {
+          activeProfileName = profile.full_name;
+        } else {
+          activeProfileName = session.user.email; // Fallback if they haven't set a profile name yet
+        }
+      } else {
+        // User is a guest. Show login prompt warning
+        document.getElementById('auth-warning').style.display = 'block';
+      }
+    }
+
+    // 4. Fetch and Render Past Reviews
+    async function fetchShoeReviews() {
+      const { data: reviews, error } = await supabaseClient
+        .from('reviews')
+        .select('*')
+        .eq('shoe_id', shoeId)
+        .order('id', { ascending: false }); // Newest reviews first
+
+      const reviewsDiv = document.getElementById('reviews-container');
+      reviewsDiv.innerHTML = ""; // Clear loader text
+
+      if (error || !reviews || reviews.length === 0) {
+        reviewsDiv.innerHTML = "<p style='color:#777;'>No reviews yet for these kicks. Be the first to leave one!</p>";
+        return;
+      }
+
+      reviews.forEach(rev => {
+        let stars = "⭐".repeat(rev.rating);
+        reviewsDiv.innerHTML += `
+          <div class="review-card">
+            <strong style="font-size:1.1rem;">${rev.user_name}</strong> 
+            <span style="margin-left: 10px;">${stars}</span>
+            <p style="margin: 0.5rem 0 0 0; color: #555;">${rev.comment}</p>
+          </div>
+        `;
+      });
+    }
+
+    // 5. Handle New Review Submission
+    document.getElementById('review-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const ratingVal = parseInt(document.getElementById('review-rating').value);
+      const commentVal = document.getElementById('review-text').value;
+
+      const { error } = await supabaseClient
+        .from('reviews')
+        .insert([
+          { 
+            shoe_id: shoeId, 
+            user_name: activeProfileName, 
+            rating: ratingVal, 
+            comment: commentVal 
+          }
+        ]);
+
+      if (error) {
+        alert("Error posting review: " + error.message);
+      } else {
+        alert("Review posted successfully!");
+        document.getElementById('review-text').value = ""; // Clear text box
+        fetchShoeReviews(); // Reload the reviews list automatically!
+      }
+    });
+
+    // Start everything on page load
+    initProductPage();
   </script>
 </body>
 </html>
