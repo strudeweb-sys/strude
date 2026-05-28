@@ -134,28 +134,43 @@
     }
 
     // 4. Fetch and Render Past Reviews
-    async function fetchShoeReviews() {
+ async function fetchShoeReviews() {
+      // 1. Ask the database ONLY for reviews that match this specific shoe
       const { data: reviews, error } = await supabaseClient
         .from('reviews')
         .select('*')
-        .eq('shoe_id', shoeId)
-        .order('id', { ascending: false }); // Newest reviews first
+        .eq('shoe_id', shoeId); // The rule is back on!
 
       const reviewsDiv = document.getElementById('reviews-container');
-      reviewsDiv.innerHTML = ""; // Clear loader text
 
-      if (error || !reviews || reviews.length === 0) {
+      if (error) {
+        reviewsDiv.innerHTML = "<p style='color:red;'>Database Error.</p>";
+        return;
+      }
+
+      // If the database returns an empty list, show the default message
+      if (!reviews || reviews.length === 0) {
         reviewsDiv.innerHTML = "<p style='color:#777;'>No reviews yet for these kicks. Be the first to leave one!</p>";
         return;
       }
 
+      // 2. Clear out the "Loading" text
+      reviewsDiv.innerHTML = "";
+
+      // 3. Put the newest reviews at the top
+      reviews.reverse();
+
+      // 4. Draw the reviews on the screen
       reviews.forEach(rev => {
-        let stars = "⭐".repeat(rev.rating);
+        // Bulletproof rating math (if rating is missing or weird, default to 5)
+        let safeRating = parseInt(rev.rating) || 5;
+        let stars = "⭐".repeat(safeRating);
+        
         reviewsDiv.innerHTML += `
-          <div class="review-card">
-            <strong style="font-size:1.1rem;">${rev.user_name}</strong> 
+          <div class="review-card" style="margin-bottom: 1rem; padding: 1.5rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong style="font-size:1.1rem; color: var(--primary);">${rev.user_name || "Anonymous"}</strong> 
             <span style="margin-left: 10px;">${stars}</span>
-            <p style="margin: 0.5rem 0 0 0; color: #555;">${rev.comment}</p>
+            <p style="margin: 0.8rem 0 0 0; color: #444; line-height: 1.5;">${rev.comment}</p>
           </div>
         `;
       });
