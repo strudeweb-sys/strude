@@ -56,7 +56,7 @@
 
   <!-- Load Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
       const supabaseUrl = 'https://uwltytozmakzpdsyakzg.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3bHR5dG96bWFrenBkc3lha3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTg3ODksImV4cCI6MjA5NTI3NDc4OX0.3Ow9gIb_87KY6gBrVAN9jJUTp4biJMIemDKoG17NetE';
@@ -67,6 +67,7 @@
     const shoeId = parseInt(urlParams.get('id'));
 
     let activeProfileName = "Anonymous User";
+    let currentShoe = null;
 
     // Main controller function
     async function initProductPage() {
@@ -80,7 +81,7 @@
       await fetchShoeReviews();
     }
 
-    // 2. Fetch Single Shoe Data
+   // 2. Fetch Single Shoe Data
     async function fetchShoeDetails() {
       const { data: shoe, error } = await supabaseClient
         .from('shoes')
@@ -93,7 +94,10 @@
         return;
       }
 
-      // Render the shoe layout. Note: using shoe.image to match your database fix!
+      // ADDED: Save the shoe data so Razorpay can access the price later
+      currentShoe = shoe; 
+
+      // Render the shoe layout.
       document.getElementById('product-container').innerHTML = `
         <div style="display: flex; gap: 3rem; background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; flex-wrap: wrap;">
           <img src="${shoe.image || shoe.img}" style="max-width: 450px; width: 100%; border-radius: 8px; object-fit: cover;">
@@ -101,7 +105,10 @@
             <h1>${shoe.name}</h1>
             <h2 class="price" style="font-size: 2rem; margin: 1rem 0;">$${shoe.price.toFixed(2)}</h2>
             <p style="line-height: 1.6; color: #555;">${shoe.description}</p>
-            <button style="margin-top: 2rem; max-width: 250px;">Add to Cart</button>
+            
+            <!-- ADDED: The onclick event to trigger the Razorpay pop-up -->
+            <button onclick="payWithRazorpay()" style="margin-top: 2rem; max-width: 250px;">Buy Now</button>
+            
           </div>
         </div>
       `;
@@ -202,7 +209,73 @@
         fetchShoeReviews(); // Reload the reviews list automatically!
       }
     });
+    // Razorpay Checkout Controller
+   // Razorpay Checkout Controller
+    function payWithRazorpay() {
+      if (!currentShoe) {
+        alert("Shoe data hasn't loaded yet. Please wait a second.");
+        return;
+      }
 
+      // Razorpay expects the amount in the smallest currency unit (paise for INR)
+      const amountInSmallestUnit = Math.round(currentShoe.price * 100);
+
+      const options = {
+        "key": "rzp_test_T3ClHGCf52v7k8", // IMPORTANT: Paste your test key here!
+        "amount": amountInSmallestUnit,
+        "currency": "INR", 
+        "name": "Stryde",
+        "description": "Purchase: " + currentShoe.name,
+        
+        "handler": async function (response) {
+          alert("Payment Successful!\nPayment ID: " + response.razorpay_payment_id);
+
+          // Get the logged-in user
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          
+          if (session) {
+            // Save the order to your Supabase table
+            const { error } = await supabaseClient
+              .from('orders')
+              .insert([
+                { 
+                  user_id: session.user.id, 
+                  shoe_id: currentShoe.id,
+                  payment_id: response.razorpay_payment_id,
+                  amount_paid: currentShoe.price,
+                  status: 'Paid'
+                }
+              ]);
+
+            if (error) {
+              console.error("Database error:", error);
+              alert("Payment worked, but there was an error saving your receipt.");
+              return;
+            }
+          } else {
+            alert("Warning: You were not logged in, so this order couldn't be saved to a profile.");
+          }
+
+          // Redirect to profile page to see the order
+          window.location.href = "profile.html"; 
+        },
+        
+        "prefill": {
+          "name": activeProfileName
+        },
+        "theme": {
+          "color": "#000000" 
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      
+      rzp.on('payment.failed', function (response){
+        alert("Payment Failed: " + response.error.description);
+      });
+
+      rzp.open();
+    }
     // Start everything on page load
     initProductPage();
   </script>
