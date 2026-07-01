@@ -62,7 +62,7 @@
     const shoeId = parseInt(urlParams.get('id'));
 
     let activeProfileName = "Anonymous User";
-    let activeUserEmail = ""; // UPDATED: Global tracker for the logged-in customer's email
+    let activeUserEmail = ""; 
     let currentShoe = null;
 
     // Main controller function
@@ -113,13 +113,9 @@
       const { data: { session } } = await supabaseClient.auth.getSession();
       
       if (session) {
-        // User is logged in! Show the review form
         document.getElementById('review-form').style.display = 'block';
-        
-        // UPDATED: Save the active email address to pass to Razorpay
         activeUserEmail = session.user.email;
         
-        // Fetch their name from 'profiles' table to stamp onto the review
         const { data: profile } = await supabaseClient
           .from('profiles')
           .select('full_name')
@@ -132,7 +128,6 @@
           activeProfileName = session.user.email; 
         }
       } else {
-        // User is a guest. Show login prompt warning
         document.getElementById('auth-warning').style.display = 'block';
       }
     }
@@ -246,21 +241,19 @@
           window.location.href = "profile.html"; 
         },
         
-      //prefill data fetcher  
-        
-    "prefill": {
+        "prefill": {
           "name": activeProfileName,
           "email": activeUserEmail
         },
         "notes": {
           "store_name": "stryde",
-          // 🟢 THIS IS THE MAGIC LINE: It dynamically grabs the ID for whichever shoe is currently on the screen!
           "product_id": currentShoe.faithox_product_id 
         },
         "theme": {
           "color": "#000000" 
         }
-      };
+      }; // <-- This brace/semicolon was missing!
+
       const rzp = new window.Razorpay(options);
       
       rzp.on('payment.failed', function (response){
