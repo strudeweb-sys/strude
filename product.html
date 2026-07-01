@@ -246,18 +246,20 @@
           window.location.href = "profile.html"; 
         },
         
-        // UPDATED: Dynamically bind the email and full metadata path
-        "prefill": {
+      //prefill data fetcher  
+        
+    "prefill": {
           "name": activeProfileName,
           "email": activeUserEmail
         },
         "notes": {
-          "store_name": "stryde"
+          "store_name": "stryde",
+          // 🟢 THIS IS THE MAGIC LINE: It dynamically grabs the ID for whichever shoe is currently on the screen!
+          "product_id": currentShoe.faithox_product_id 
         },
         "theme": {
           "color": "#000000" 
         }
-      };
 
       const rzp = new window.Razorpay(options);
       
