@@ -245,15 +245,14 @@
           "name": activeProfileName,
           "email": activeUserEmail
         },
-        // 🟢 UPDATED: Changed 'store_name' to 'store_id' to match Faithox webhook
         "notes": {
-          "store_name": "stryde", // Make sure this matches the exact Webhook identifier or actual store_id generated in Faithox
-          "product_id": currentShoe.name
+          "store_name": "stryde", 
+          "product_name": currentShoe.name // 🟢 PERFECTLY UPDATED TO product_name
         },
         "theme": {
           "color": "#000000" 
         }
-      }; // <-- This brace/semicolon was missing!
+      };
 
       const rzp = new window.Razorpay(options);
       
