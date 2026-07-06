@@ -18,8 +18,6 @@
     <h2>Loading product details...</h2>
   </div>
 
- 
-
   <div class="container">
     <h3>Customer Reviews</h3>
     <div id="reviews-container">
@@ -34,7 +32,7 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3bHR5dG96bWFrenBkc3lha3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTg3ODksImV4cCI6MjA5NTI3NDc4OX0.3Ow9gIb_87KY6gBrVAN9jJUTp4biJMIemDKoG17NetE';
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 1. Get the shoe ID from the browser URL address bar
+    // Get the shoe ID from the browser URL address bar
     const urlParams = new URLSearchParams(window.location.search);
     const shoeId = parseInt(urlParams.get('id'));
 
@@ -42,7 +40,7 @@
     let activeUserEmail = ""; 
     let currentShoe = null;
 
-      // Main controller function
+    // Main controller function
     async function initProductPage() {
       if (!shoeId) {
         document.getElementById('product-container').innerHTML = "<h1>No product selected.</h1>";
@@ -51,11 +49,9 @@
 
       await fetchShoeDetails();
       await checkUserLoginStatus();
-      
-      // 🟢 REMOVED: await fetchShoeReviews(); (We don't need Stryde's local reviews anymore)
     }
 
-    // 2. Fetch Single Shoe Data & Inject Faithox Widget
+    // Fetch Single Shoe Data & Inject Faithox Widget
     async function fetchShoeDetails() {
       const { data: shoe, error } = await supabaseClient
         .from('shoes')
@@ -102,12 +98,11 @@
       }
     }
 
-    // 3. Check User Session & Get Profile Name
+    // Check User Session for Razorpay Prefill
     async function checkUserLoginStatus() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       
       if (session) {
-        document.getElementById('review-form').style.display = 'block';
         activeUserEmail = session.user.email;
         
         const { data: profile } = await supabaseClient
@@ -121,73 +116,8 @@
         } else {
           activeProfileName = session.user.email; 
         }
-      } else {
-        document.getElementById('auth-warning').style.display = 'block';
       }
     }
-
-    // 4. Fetch and Render Past Reviews
-    async function fetchShoeReviews() {
-      const { data: reviews, error } = await supabaseClient
-        .from('reviews')
-        .select('*')
-        .eq('shoe_id', shoeId);
-
-      const reviewsDiv = document.getElementById('reviews-container');
-
-      if (error) {
-        reviewsDiv.innerHTML = "<p style='color:red;'>Database Error.</p>";
-        return;
-      }
-
-      if (!reviews || reviews.length === 0) {
-        reviewsDiv.innerHTML = "<p style='color:#777;'>No reviews yet for these kicks. Be the first to leave one!</p>";
-        return;
-      }
-
-      reviewsDiv.innerHTML = "";
-      reviews.reverse();
-
-      reviews.forEach(rev => {
-        let safeRating = parseInt(rev.rating) || 5;
-        let stars = "⭐".repeat(safeRating);
-        
-        reviewsDiv.innerHTML += `
-          <div class="review-card" style="margin-bottom: 1rem; padding: 1.5rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <strong style="font-size:1.1rem; color: var(--primary);">${rev.user_name || "Anonymous"}</strong> 
-            <span style="margin-left: 10px;">${stars}</span>
-            <p style="margin: 0.8rem 0 0 0; color: #444; line-height: 1.5;">${rev.comment}</p>
-          </div>
-        `;
-      });
-    }
-
-    // 5. Handle New Review Submission
-    document.getElementById('review-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const ratingVal = parseInt(document.getElementById('review-rating').value);
-      const commentVal = document.getElementById('review-text').value;
-
-      const { error } = await supabaseClient
-        .from('reviews')
-        .insert([
-          { 
-            shoe_id: shoeId, 
-            user_name: activeProfileName, 
-            rating: ratingVal, 
-            comment: commentVal 
-          }
-        ]);
-
-      if (error) {
-        alert("Error posting review: " + error.message);
-      } else {
-        alert("Review posted successfully!");
-        document.getElementById('review-text').value = ""; 
-        fetchShoeReviews(); 
-      }
-    });
 
     // Razorpay Checkout Controller
     function payWithRazorpay() {
@@ -242,7 +172,7 @@
         "notes": {
           "store_name": "stryde", 
           "product_name": currentShoe.name,
-          "faithox_product_id": currentShoe.faithox_product_id // 🟢 PASS THE EXACT FAITHOX ID HERE
+          "faithox_product_id": currentShoe.faithox_product_id 
         },
         "theme": {
           "color": "#000000" 
